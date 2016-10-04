@@ -1,8 +1,0 @@
--------------------------------------------------------------------------------
-Test set: ru.akudinov.test.RestApplicationTests
--------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 3.895 sec <<< FAILURE! - in ru.akudinov.test.RestApplicationTests
-testListByPersonId(ru.akudinov.test.RestApplicationTests)  Time elapsed: 0.495 sec  <<< ERROR!
-java.lang.NullPointerException: null
-	at ru.akudinov.test.RestApplicationTests.testListByPersonId(RestApplicationTests.java:72)
-
