@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
  * Created by akudinov on 04.10.16.
  */
 @Slf4j
-@DirtiesContext
 public class RateLimitTest {
     private RateLimit rateLimit;
 
@@ -32,7 +31,7 @@ public class RateLimitTest {
     @Test
     public void testFailedRateLimit() throws InterruptedException {
         rateLimit.setLimit(1L);
-        long count = prepareCalculation(10000);
+        long count = prepareCalculation(10);
 
         assertTrue("Some request was not accepted", count > 0);
     }
