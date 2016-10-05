@@ -32,7 +32,7 @@ public class RateLimitTest {
     @Test
     public void testFailedRateLimit() throws InterruptedException {
         rateLimit.setLimit(1L);
-        long count = prepareCalculation(1000);
+        long count = prepareCalculation(10000);
 
         assertTrue("Some request was not accepted", count > 0);
     }
