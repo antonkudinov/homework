@@ -1,4 +1,4 @@
-# homework  
+# homework  (Status https://travis-ci.org/antonkudinov/homework.svg?branch=master)
 This is  solution for https://github.com/yurachud/homework
 
 #How to build
