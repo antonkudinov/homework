@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
  * Created by akudinov on 04.10.16.
  */
 @Slf4j
+@DirtiesContext
 public class RateLimitTest {
     private RateLimit rateLimit;
 
@@ -31,9 +32,9 @@ public class RateLimitTest {
     @Test
     public void testFailedRateLimit() throws InterruptedException {
         rateLimit.setLimit(1L);
-        long count = prepareCalculation(10);
+        long count = prepareCalculation(10000);
 
-        assertTrue("Some request was not accepted", count > 0);
+        assertTrue("Some request was not accepted [" + count + "]", count > 0);
     }
 
     @Test
@@ -50,7 +51,7 @@ public class RateLimitTest {
             tasks.add(() -> rateLimit.acquire("test"));
         }
 
-        List<Future<Boolean>> futures = Executors.newFixedThreadPool(requests).invokeAll(tasks);
+        List<Future<Boolean>> futures = Executors.newCachedThreadPool().invokeAll(tasks);
 
 
         return futures.stream().filter(s -> {
@@ -65,3 +66,4 @@ public class RateLimitTest {
 
 
 }
+
