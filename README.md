@@ -1,4 +1,8 @@
-# homework  (Status https://travis-ci.org/antonkudinov/homework.svg?branch=master)
+# homework  
+![Build Status](https://travis-ci.org/antonkudinov/homework.svg?branch=master)
+![Coverage Status](http://img.shields.io/coveralls/antonkudinov/homework/master.svg?style=flat-square)
+
+
 This is  solution for https://github.com/yurachud/homework
 
 #How to build
