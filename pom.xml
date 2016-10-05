@@ -81,10 +81,23 @@
 
     <build>
         <plugins>
-            <plugin>
+             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
+             </plugin>
+             <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.7.201606060606</version>
+             </plugin>                 
+             <plugin>
+                      <groupId>org.eluder.coveralls</groupId>
+                      <artifactId>coveralls-maven-plugin</artifactId>
+                      <version>4.3.0</version>
+                      <configuration>
+                           <repoToken>8DogbA9XfXMwqcXfpmOF2rgVluWlbjvFgFIs4</repoToken>
+                      </configuration>
+             </plugin>                 
         </plugins>
     </build>
 
