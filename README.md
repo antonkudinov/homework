@@ -1,7 +1,6 @@
 # homework  
-![Build Status](https://travis-ci.org/antonkudinov/homework.svg?branch=master)
-![Coverage Status](http://img.shields.io/coveralls/antonkudinov/homework/master.svg?style=flat-square)
-
+[![Build Status](https://travis-ci.org/antonkudinov/homework.svg?branch=master)](https://travis-ci.org/antonkudinov/homework)
+[![Coverage Status](http://img.shields.io/coveralls/antonkudinov/homework/master.svg?style=flat-square)](https://coveralls.io/antonkudinov/homework)
 
 This is  solution for https://github.com/yurachud/homework
 
