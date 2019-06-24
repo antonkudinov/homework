@@ -1,24 +1,23 @@
-package ru.akudinov.test;
+package ru.akudinov.test.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.akudinov.test.exception.PersonIsBlockedException;
 import ru.akudinov.test.model.Loan;
 import ru.akudinov.test.repository.BlockedPersonRepository;
 import ru.akudinov.test.repository.LoanRepository;
+import ru.akudinov.test.service.LoanService;
 
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Collections.singletonList;
+
 @Component
-/**
- * This service implements basic functionality of loan service
- */
-public class ApplyLoanService implements LoanService {
-	@Autowired private LoanRepository loanRepository;
-	@Autowired private BlockedPersonRepository blockedPersonRepository;
+@AllArgsConstructor
+public class LoanServiceImpl implements LoanService {
+	private LoanRepository loanRepository;
+	private BlockedPersonRepository blockedPersonRepository;
 
 	public Loan apply(Loan loan) {
 		if (blockedPersonRepository.isPersonBlocked(loan.getPersonalId())){
@@ -30,7 +29,7 @@ public class ApplyLoanService implements LoanService {
 	@Override
 	public List<Loan> list(Long personalId) {
 		return Optional.ofNullable(personalId)
-				.map(p -> Arrays.asList(loanRepository.findByPersonalId(personalId)))
+				.map(p -> singletonList(loanRepository.findByPersonalId(personalId)))
 				.orElse((List<Loan>) loanRepository.findAll());
 	}
 

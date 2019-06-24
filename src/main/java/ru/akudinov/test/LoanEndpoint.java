@@ -1,69 +1,50 @@
 package ru.akudinov.test;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.*;
 import ru.akudinov.test.exception.PersonIsBlockedException;
 import ru.akudinov.test.model.Loan;
+import ru.akudinov.test.service.impl.Ip2CountryService;
+import ru.akudinov.test.service.LoanService;
+import ru.akudinov.test.service.RateLimit;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
+import java.util.List;
 
-@Component
-@Path("/loan")
+@RestController
+@RequestMapping("/loan")
 @Slf4j
-/**
- * Endpoint for loan web service
- */
+@AllArgsConstructor
 public class LoanEndpoint {
-
-	public static final int TO_MANY_REQUESTS = 429;
-	private final LoanService loanService;
-	@Autowired
-	private RateLimit rateLimit;
-	@Autowired
-	private Ip2CountryService countryService;
-
-	@Autowired
-	public LoanEndpoint(LoanService loanService) {
-		this.loanService = loanService;
-	}
-
-	@POST
-	@Consumes("application/json")
-	@Produces("application/json")
-	@Path("apply")
-	public Response apply(Loan loan, @Context HttpServletRequest request) {
-		String country = countryService.takeCountry(request.getRemoteAddr());
-		log.info("Take country : {}", country);
-		if (!rateLimit.acquire(country)){
-			log.info("Too many requests from {}", country);
-			return Response.status(TO_MANY_REQUESTS).build();
-		}
-
-		try {
-			return Response.ok(loanService.apply(loan)).build();
-		} catch (PersonIsBlockedException e) {
-			return Response.serverError().entity("Person is blocked").build();
-		}
-	}
-
-	@GET
-	@Produces("application/json")
-	@Path("list/{personalId}")
-	public Response list(@PathParam("personalId") Long personalId) {
-		return Response.ok(loanService.list(personalId)).build();
-	}
-
-	@GET
-	@Produces("application/json")
-	@Path("list")
-	public Response list() {
-		return Response.ok(loanService.list(null)).build();
-	}
+    private final LoanService loanService;
+    private RateLimit rateLimit;
+    private Ip2CountryService countryService;
 
 
+    @PostMapping(path = "apply")
+    public Loan apply(@RequestBody Loan loan, HttpServletRequest request) {
+        final String country = countryService.takeCountry(request.getRemoteAddr());
+        log.info("Take country : {}", country);
+        if (!rateLimit.acquire(country)) {
+            log.info("Too many requests from {}", country);
+            throw new RuntimeException("Too many requests");
+        }
 
+        try {
+            return loanService.apply(loan);
+        } catch (PersonIsBlockedException e) {
+            throw new RuntimeException("Person is blocked");
+        }
+    }
+
+    @GetMapping("list/{personalId}")
+    public List<Loan> list(@PathVariable("personalId") Long personalId) {
+        return loanService.list(personalId);
+    }
+
+    @GetMapping("list")
+    public List<Loan> list() {
+        return loanService.list(null);
+    }
 }

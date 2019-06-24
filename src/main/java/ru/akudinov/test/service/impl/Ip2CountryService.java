@@ -1,4 +1,4 @@
-package ru.akudinov.test;
+package ru.akudinov.test.service.impl;
 
 import com.google.common.base.Strings;
 import lombok.Data;
@@ -10,15 +10,16 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.util.Optional;
 
-@Component
 /**
  * This class used for calculate country by user IP
  */
+@Component
 public class Ip2CountryService {
     @Setter
-    private RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory());
+    private RestTemplate restTemplate;
 
     @Value("${ip2country.url}")
     private String url;
@@ -27,9 +28,15 @@ public class Ip2CountryService {
     @Value("${ip2country.default_country}")
     private String defaultCountryCode;
 
+
+    @PostConstruct
+    private void init(){
+        restTemplate = new RestTemplate(getClientHttpRequestFactory());
+    }
+
     @Data
     @RequiredArgsConstructor
-    final static class Country{
+    public final static class Country{
         private final String country_code;
     }
 

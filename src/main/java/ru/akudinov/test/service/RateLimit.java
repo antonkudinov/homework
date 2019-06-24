@@ -1,4 +1,4 @@
-package ru.akudinov.test;
+package ru.akudinov.test.service;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,13 +14,11 @@ import java.util.function.Function;
 @Slf4j
 @Component
 /**
- *
  * This class implements throttle pattern
  */
 public class RateLimit {
     public static final int ONE_SECOND_DELAY = 1;
-    //private final ConcurrentHashMap<String, RateLimiter> limiters;
-    private final ConcurrentHashMap<String, DelayQueue> limiters;
+    private final ConcurrentHashMap<String, DelayQueue<Delayed>> limiters;
 
     @Value("${loansPerSecond}")
     @Setter
@@ -30,28 +28,11 @@ public class RateLimit {
         this.limiters = new ConcurrentHashMap<>();
     }
 
-
-    /**
-     * try to acquire rate limiter by country
-    **/
-//    public boolean acquire(String country) {
-//        double permitsPerSecond = limiters.computeIfAbsent(country, name -> RateLimiter.create(limit)).acquire();
-//        return permitsPerSecond <= limit;
-//    }
-
-
-    /**
-     * try to acquire rate limiter by country
-     **/
-//    public boolean acquire(String country) {
-//        return limiters.computeIfAbsent(country, name -> RateLimiter.create(limit)).tryAcquire();
-//    }
-
     /**
      * try to acquire rate limiter by country
      **/
     public boolean acquire(String country) {
-        DelayQueue delayQueue = limiters.computeIfAbsent(country, delayQueueFunction());
+        DelayQueue<Delayed> delayQueue = limiters.computeIfAbsent(country, delayQueueFunction());
 
         final Delayed poll = delayQueue.poll(); // try to get delayed element, null if absent
         delayQueue.put(createDelayedElement(ONE_SECOND_DELAY));
@@ -59,15 +40,15 @@ public class RateLimit {
 
     }
 
-    private Function<String, DelayQueue> delayQueueFunction() {
+    private Function<String, DelayQueue<Delayed>> delayQueueFunction() {
         return name ->
-                {
-                    DelayQueue dQueue = new DelayQueue();
-                    for (int i = 0; i < limit; i ++) {
-                        dQueue.put(createDelayedElement(0));
-                    }
-                    return dQueue;
-                };
+        {
+            DelayQueue<Delayed> dQueue = new DelayQueue<>();
+            for (int i = 0; i < limit; i++) {
+                dQueue.put(createDelayedElement(0));
+            }
+            return dQueue;
+        };
     }
 
     private Delayed createDelayedElement(int delay) {
@@ -79,9 +60,7 @@ public class RateLimit {
 
             @Override
             public int compareTo(Delayed o) {
-                return getDelay(TimeUnit.SECONDS) == o.getDelay(TimeUnit.SECONDS)
-                        ? 0
-                        : getDelay(TimeUnit.SECONDS) > o.getDelay(TimeUnit.SECONDS) ? 1 : -1;
+                return Long.compare(getDelay(TimeUnit.SECONDS), o.getDelay(TimeUnit.SECONDS));
             }
         };
     }

@@ -1,93 +1,106 @@
 package ru.akudinov.test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.akudinov.test.model.Loan;
 import ru.akudinov.test.repository.LoanRepository;
+import ru.akudinov.test.service.impl.Ip2CountryService;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static java.util.Arrays.asList;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static ru.akudinov.test.LoanHelper.loan;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
+        classes = RestApplication.class)
+@AutoConfigureMockMvc
+@DirtiesContext
 @Slf4j
 public class RestApplicationTests {
 
-	@Autowired
-	private TestRestTemplate restTemplate;
+    @Autowired
+    private MockMvc mockMvc;
 
-	@Autowired
-	private LoanRepository repository;
+    @MockBean
+    private Ip2CountryService service;
 
-	@Before
-	public void init(){
-		repository.deleteAll();
-	}
+    @Autowired
+    private LoanRepository repository;
+    private ObjectMapper objectMapper;
 
-	@Test
-	public void testApply(){
-		Loan loan = new Loan(BigDecimal.valueOf(100), 10, 10L , "Ivan", "Ivanov");
+    @Before
+    public void init() {
+        given(service.takeCountry("127.0.0.1")).willReturn("RU");
+        objectMapper = new ObjectMapper();
 
-		ResponseEntity<Loan> entity = this.restTemplate.postForEntity("/loan/apply", loan,
-				Loan.class);
-		assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Assert.assertNotNull(entity.getBody().getId());
-	}
+        repository.saveAll(
+                asList(loan(BigDecimal.valueOf(100), 10, 11L, "Ivan", "Ivanov1"),
+                loan(BigDecimal.valueOf(200), 10, 12L, "Ivan", "Ivanov2"),
+                loan(BigDecimal.valueOf(300), 10, 13L, "Ivan", "Ivanov3"))
+        );
+    }
 
-	@Test
-	public void testListByPersonId(){
-		Arrays.asList(
-			new Loan(BigDecimal.valueOf(100), 10, 11L , "Ivan", "Ivanov1"),
-			new Loan(BigDecimal.valueOf(200), 10, 12L , "Ivan", "Ivanov2"),
-			new Loan(BigDecimal.valueOf(300), 10, 13L , "Ivan", "Ivanov3")
-		).forEach(loan -> {
-					ResponseEntity<Loan> o = this.restTemplate.postForEntity("/loan/apply", loan, Loan.class);
-					log.info("Applying loan: {}", o.toString());
-				}
-			);
-
-		ResponseEntity<List> entity = restTemplate.getForEntity("/loan/list/{pesonalId}", List.class, 11L);
-		assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertTrue(java.util.Optional.ofNullable(entity.getBody().size()).get() == 1);
-	}
-
-	@Test
-	public void testList(){
-		Arrays.asList(
-				new Loan(BigDecimal.valueOf(100), 10, 11L , "Ivan", "Ivanov1"),
-				new Loan(BigDecimal.valueOf(200), 10, 12L , "Ivan", "Ivanov2"),
-				new Loan(BigDecimal.valueOf(300), 10, 13L , "Ivan", "Ivanov3")
-		).forEach(loan ->
-				this.restTemplate.postForEntity("/loan/apply", loan, Loan.class));
-
-		ResponseEntity<List> entity = restTemplate.getForEntity("/loan/list", List.class);
-		assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertEquals(3, java.util.Optional.ofNullable(entity.getBody()).get().size());
-	}
+    @Before
+    public void after() {
+        repository.deleteAll();
+    }
 
 
-	@Test
-	public void testRejectedApplyByBlockedUser(){
-		Loan loan = new Loan(BigDecimal.valueOf(100), 10, 1L , "Ivan", "Ivanov");
+    @Test
+    public void testApply() throws Exception {
+        final Loan loan = loan(BigDecimal.valueOf(100), 10, 10L, "Ivan", "Ivanov");
 
-		ResponseEntity<String> entity = this.restTemplate.postForEntity("/loan/apply", loan, String.class);
-		assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-	}
+        mockMvc.perform(
+                post("/loan/apply").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loan)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.term", Matchers.is(10)));
+    }
+
+    @Test
+    public void testListByPersonId() throws Exception {
+        mockMvc.perform(
+                get("/loan/list/11"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].personalId", Matchers.is(11)));
+    }
+
+    @Test
+    public void testList() throws Exception {
+        mockMvc.perform(
+                get("/loan/list"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", Matchers.hasSize(3)));
+    }
+
+
+    @Test
+    public void testRejectedApplyByBlockedUser()  throws Exception {
+        Loan loan = loan(BigDecimal.valueOf(100), 10, 1L, "Ivan", "Ivanov");
+        mockMvc.perform(
+                post("/loan/apply").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loan)))
+                .andExpect(status().is5xxServerError());
+    }
 
 
 }

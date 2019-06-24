@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static ru.akudinov.test.LoanHelper.loan;
 
 /**
  * Created by akudinov on 03.10.16.
@@ -28,8 +29,8 @@ public class ApplicationIntegrationTest {
     @Test
     public void useRepositories() {
 
-        loanRepository.save(new Loan(BigDecimal.valueOf(100), 10, 1L, "Frodo", "Baggins"));
-        loanRepository.save(new Loan(BigDecimal.valueOf(130), 1, 2L, "Bilbo", "Baggins"));
+        loanRepository.save(loan(BigDecimal.valueOf(100), 10, 1L, "Frodo", "Baggins"));
+        loanRepository.save(loan(BigDecimal.valueOf(130), 1, 2L, "Bilbo", "Baggins"));
 
         for (Loan person : loanRepository.findAll()) {
             log.info("Hello " + person.toString());

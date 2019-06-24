@@ -12,18 +12,21 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
-@Component
 /**
  * Basic repository for blocked persons
  */
+@Component
 public class BlockedPersonRepository implements InitializingBean{
     private Set<Long> personDb = new HashSet<>();
 
     @Value("${blockedlist.filename}")
     private String blockedListFileName;
 
-    @Autowired
-    private ResourceLoader resourceLoader;
+    private final ResourceLoader resourceLoader;
+
+    public BlockedPersonRepository(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
 
     public boolean isPersonBlocked(Long personalId){
         return personDb.contains(personalId);
